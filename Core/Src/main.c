@@ -85,7 +85,7 @@ float checkData(MPU6050_t DataStruct , thresholding *data){
     for (uint16_t i = 0; i < 3; i++) {
         if ((derivative[i] > 0 && derivative[i + 1] < 0) || (derivative[i] < 0 && derivative[i + 1] > 0)) {
             // Kiem tra dieu kien do loc các dinh
-            if(data_G[i] >= 50){
+            if(data_G[i] >= 40){
                 data->count ++;
             }
         }
@@ -130,6 +130,13 @@ uint16_t GPIO_ReadPin(GPIO_TypeDef *GPIO, uint16_t GPIO_Pin)
   }
   return bitstatus;
 }
+//////////////////////////togle register
+uint16_t Togle(GPIO_TypeDef *GPIOx,uint16_t GPIO_Pin){
+	/* get current Output Data Register value */
+				odr = GPIOx->ODR;
+				/* Set selected pins that were at low level, and reset ones that were high */
+				GPIOx->BSRR = ((odr & GPIO_Pin) << 16u) | (~odr & GPIO_Pin);
+}
 
 void GPIO_Init(void)
 {
@@ -162,12 +169,12 @@ void GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 	
-	GPIO_WritePin(GPIOC, GPIO_PIN_2, 0);
-	/*Configure GPIO pin : PA2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /*Configure GPIO pin : PB3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 	
 }
 	////////////////////////////////I2C_INIT/////////////////////////////
@@ -288,13 +295,9 @@ int main(void)
 					SSD1306_Clear();
 					break;
 				}
-				////// led reg
-				GPIO_WritePin(GPIOC, GPIO_PIN_2, 1);
-				Delay_ms(300);
-				GPIO_WritePin(GPIOC, GPIO_PIN_2, 0);
-				/////
+				////// led reg/////////
+				Togle(GPIOB,GPIO_PIN_3);
 				Delay_ms(500);
-			
 			}
 			
 		}
@@ -308,38 +311,16 @@ int main(void)
 		// printf screen oleg
 		
 		
-		SSD1306_GotoXY(0,10);
-		sprintf(buff, "Magnitude:= %.2f", data.magnitude);
-		SSD1306_Puts(buff, &Font_7x10, SSD1306_COLOR_WHITE);
+
 		
-		SSD1306_GotoXY(0,20);
+		SSD1306_GotoXY(20,30);
 		sprintf(buff, "Steps:= %d", data.count);
-		SSD1306_Puts(buff, &Font_7x10, SSD1306_COLOR_WHITE);
-		
-		
-		SSD1306_GotoXY(0,30);
-		sprintf(buff, "Az:= %.2f", MPU6050.Gx);
-		SSD1306_Puts(buff, &Font_7x10, SSD1306_COLOR_WHITE);
-		
-		
-		SSD1306_GotoXY(0,40);
-		sprintf(buff, "Gy:= %.2f", MPU6050.Gy);
-		SSD1306_Puts(buff, &Font_7x10, SSD1306_COLOR_WHITE);
-		
-		
-		SSD1306_GotoXY(0,50);
-		sprintf(buff, "Gz:= %.2f", MPU6050.Gz);
 		SSD1306_Puts(buff, &Font_7x10, SSD1306_COLOR_WHITE);
 		SSD1306_UpdateScreen();
 		
-		/* get current Output Data Register value */
-		odr = GPIOC->ODR;
-		/* Set selected pins that were at low level, and reset ones that were high */
-		GPIOC->BSRR = ((odr & GPIO_PIN_13) << 16u) | (~odr & GPIO_PIN_13);
-		
-		    
-    //Delay_ms(500);
-		
+		Togle(GPIOC,GPIO_PIN_13);
+			Delay_ms(200);
+	
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
